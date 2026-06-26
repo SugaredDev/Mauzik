@@ -7,18 +7,18 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using FMODUnity;
 
-namespace Mauzik
+namespace Mauzik.Editor
 {
 
-public class Audio_Debugger : EditorWindow
+public class Mauzik_Debugger : EditorWindow
 {
 
-    const string ResourcesPath = "Assets/Audio/Resources";
-    const string AssetPath = ResourcesPath + "/Audio_Library.asset";
+    const string ResourcesPath = "Assets/Mauzik/Resources";
+    const string AssetPath = ResourcesPath + "/Mauzik_Library.asset";
 
     class ScriptRef { public string path; public int line; public string token; }
 
-    Audio_Library bank;
+    Mauzik_Library bank;
     SerializedObject so;
     HashSet<string> scriptPkgRefs = new();
     HashSet<string> scriptParamRefs = new();
@@ -30,16 +30,14 @@ public class Audio_Debugger : EditorWindow
 
     GUIStyle sDotGreen, sDotRed, sDotGray, sSection, sOrphanSection, sMini, sRichMini;
 
-    [MenuItem("Tools/Audio (FMOD)")]
-    static void Open() => GetWindow<Audio_Debugger>("Audio (FMOD)");
+    [MenuItem("Tools/Mauzik (FMOD)")]
+    static void Open() => GetWindow<Mauzik_Debugger>("Mauzik (FMOD)");
 
     void OnEnable() => RefreshAll();
 
-    void OnValidate() => RefreshAll(); // TODO: To be improved so it's when FMOd refreshes and not on all Validates.
-
     void RefreshAll()
     {
-        bank = AssetDatabase.LoadAssetAtPath<Audio_Library>(AssetPath);
+        bank = AssetDatabase.LoadAssetAtPath<Mauzik_Library>(AssetPath);
         so = bank != null ? new SerializedObject(bank) : null;
         ScanScripts();
         Repaint();
@@ -52,10 +50,10 @@ public class Audio_Debugger : EditorWindow
         orphans.Clear();
         correctRefs.Clear();
 
-        var strAssignRe = new Regex(@"(\w+)\s*=\s*""([^""]+)""",                                                    RegexOptions.Compiled);
-        var pkgRe       = new Regex(@"Audio_Master\s*\.\s*(?:Get|Attach)\s*\(\s*(?:""([^""]+)""|(\w+))",           RegexOptions.Compiled);
-        var paramRe     = new Regex(@"\.Parameter\s*\(\s*(?:""([^""]+)""|(\w+))",                                  RegexOptions.Compiled);
-        var paramIdxRe  = new Regex(@"\.Parameter\s*\(\s*(\d+)\s*,",                                               RegexOptions.Compiled);
+        var strAssignRe = new Regex(@"(\w+)\s*=\s*""([^""]+)""", RegexOptions.Compiled);
+        var pkgRe = new Regex(@"Audio_Master\s*\.\s*(?:Get|Attach)\s*\(\s*(?:""([^""]+)""|(\w+))", RegexOptions.Compiled);
+        var paramRe = new Regex(@"\.SetParameter\s*\(\s*(?:""([^""]+)""|(\w+))", RegexOptions.Compiled);
+        var paramIdxRe = new Regex(@"\.SetParameter\s*\(\s*(\d+)\s*,", RegexOptions.Compiled);
 
         var validParamNames = bank?.Packages?
             .Where(p => p?.parameters != null)
@@ -73,6 +71,7 @@ public class Audio_Debugger : EditorWindow
         {
             string ap = AssetDatabase.GUIDToAssetPath(guid);
             if (!ap.EndsWith(".cs", StringComparison.OrdinalIgnoreCase)) continue;
+            
             string src;
             try { src = File.ReadAllText(ap); } catch { continue; }
 
@@ -117,7 +116,8 @@ public class Audio_Debugger : EditorWindow
     static int LineOf(string src, int idx)
     {
         int n = 1;
-        for (int i = 0; i < idx && i < src.Length; i++) if (src[i] == '\n') n++;
+        for (int i = 0; i < idx && i < src.Length; i++) 
+            if (src[i] == '\n') n++;
         return n;
     }
 
@@ -161,7 +161,10 @@ public class Audio_Debugger : EditorWindow
             if (GUILayout.Button("Refresh All", EditorStyles.toolbarButton, GUILayout.Width(80)))
                 RefreshAll();
             if (bank != null && GUILayout.Button("Select Asset", EditorStyles.toolbarButton, GUILayout.Width(80)))
-            { Selection.activeObject = bank; EditorGUIUtility.PingObject(bank); }
+            { 
+                Selection.activeObject = bank; 
+                EditorGUIUtility.PingObject(bank); 
+            }
             GUILayout.FlexibleSpace();
             bool ready = EventManager.IsLoaded;
             string status = ready
@@ -174,19 +177,17 @@ public class Audio_Debugger : EditorWindow
     void DrawCreateBankPrompt()
     {
         EditorGUILayout.Space(8);
-        EditorGUILayout.HelpBox($"No Audio_Libray found at {AssetPath}.", MessageType.Warning);
-        if (GUILayout.Button("Create Audio_Libray", GUILayout.Height(30)))
+        EditorGUILayout.HelpBox($"Mauzik => No Mauzik_Library found at {AssetPath}.", MessageType.Warning);
+        if (GUILayout.Button("Create Mauzik_Library", GUILayout.Height(30)))
         {
             Directory.CreateDirectory(ResourcesPath);
             AssetDatabase.Refresh();
-            var a = CreateInstance<Audio_Library>();
+            var a = CreateInstance<Mauzik_Library>();
             AssetDatabase.CreateAsset(a, AssetPath);
             AssetDatabase.SaveAssets();
             RefreshAll();
         }
     }
-
-    // Script References
 
     void DrawScripts()
     {
@@ -195,7 +196,7 @@ public class Audio_Debugger : EditorWindow
 
         if (orphans.Count > 0)
         {
-            EditorGUILayout.LabelField($"  Incorrect  ({orphans.Count})", sOrphanSection);
+            EditorGUILayout.LabelField($"Mauzik => Incorrect  ({orphans.Count})", sOrphanSection);
             EditorGUILayout.Space(2);
             foreach (var r in orphans) DrawRef(r, sDotRed);
             EditorGUILayout.Space(4);
@@ -226,8 +227,6 @@ public class Audio_Debugger : EditorWindow
         EditorGUILayout.Space(2);
     }
 
-    // Events
-
     void DrawEvents()
     {
         EditorGUILayout.LabelField("Events", sSection);
@@ -235,9 +234,7 @@ public class Audio_Debugger : EditorWindow
 
         if (!EventManager.IsLoaded)
         {
-            EditorGUILayout.HelpBox(
-                "FMOD => Events cache not loaded.",
-                MessageType.Info);
+            EditorGUILayout.HelpBox("FMOD => Events cache not loaded.", MessageType.Info);
             if (bank.Packages != null)
             {
                 foreach (var p in bank.Packages)
@@ -321,8 +318,6 @@ public class Audio_Debugger : EditorWindow
         }
     }
 
-    // ── Mutations ─────────────────────────────────────────────────────────────
-
     Audio_Package FindPkg(string eventPath) =>
         bank?.Packages?.FirstOrDefault(p => p != null && p.Event.Path == eventPath);
 
@@ -403,7 +398,7 @@ public class Audio_Debugger : EditorWindow
     {
         EditorUtility.SetDirty(bank);
         AssetDatabase.SaveAssets();
-        bank = AssetDatabase.LoadAssetAtPath<Audio_Library>(AssetPath);
+        bank = AssetDatabase.LoadAssetAtPath<Mauzik_Library>(AssetPath);
         so = bank != null ? new SerializedObject(bank) : null;
         ScanScripts();
         Repaint();
@@ -416,7 +411,7 @@ public class Audio_Debugger : EditorWindow
         EditorGUI.DrawRect(r, new Color(0.5f, 0.5f, 0.5f, 0.35f));
         EditorGUILayout.Space(4);
     }
-
+    
 }
 
 }

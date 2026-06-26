@@ -1,46 +1,44 @@
 using UnityEngine;
 using System;
+using System.Collections.Generic;
 using FMODUnity;
 using FMOD.Studio;
 using FMOD;
-using DG.Tweening;
-using System.Collections.Generic;
-using UnityEngine.UIElements;
 
 namespace Mauzik
 {
-
-public static class Audio_Master
+    
+public static class Mauzik_Master
 {
 
-    const string libraryname = "Audio_Library";
-    static Audio_Library data;
-    static Audio_Library Data
+    const string LibraryName = "Mauzik_Library";
+    static Mauzik_Library data;
+    
+    static Mauzik_Library Data
     {
         get
         {
             if (data != null) return data;
-            data = Resources.Load<Audio_Library>(libraryname);
-            if (data == null) UnityEngine.Debug.LogError($"Audio => No {libraryname} found in Resources. Create one via Tools > Audio Tool.");
+            data = Resources.Load<Mauzik_Library>(LibraryName);
+            if (data == null) UnityEngine.Debug.LogError($"Mauzik => No {LibraryName} found in Resources. Create one via Tools > Audio Tool.");
             return data;
         }
     }
 
+    static readonly HashSet<Audio_Source> sources = new();
+    static readonly Dictionary<string, HashSet<string>> bankEventPaths = new();
+
     public static Audio_Package Get(string name)
     {
         var pkg = Data?.Get(name);
-        if (pkg == null) UnityEngine.Debug.LogWarning($"Audio => Package \"{name}\" not found.");
+        if (pkg == null) UnityEngine.Debug.LogWarning($"Mauzik => Package \"{name}\" not found.");
         return pkg;
     }
 
     public static Audio_Source Attach(string name, Transform target) =>
         Audio_Source.Create(Get(name), target);
 
-    static readonly HashSet<Audio_Source> sources = new();
-    static readonly Dictionary<string, Tween> bankFades = new();
-    static readonly Dictionary<string, HashSet<string>> bankEventPaths = new();
-
-    internal static void Register(Audio_Source s)   { if (s != null) sources.Add(s); }
+    internal static void Register(Audio_Source s) { if (s != null) sources.Add(s); }
     internal static void Unregister(Audio_Source s) { if (s != null) sources.Remove(s); }
 
     public static bool SetBankVolume(string bankName, float volume)
@@ -50,47 +48,11 @@ public static class Audio_Master
         return true;
     }
 
-    public static bool FadeBankVolume(string bankName, float targetVolume, float duration)
-    {
-        string path = NormalizeBankPath(bankName);
-        if (!TryGetBankEventPaths(path, out var events)) return false;
-
-        if (bankFades.TryGetValue(path, out var active)) active.Kill();
-        targetVolume = Mathf.Clamp01(targetVolume);
-        if (duration <= 0f) { ApplyBankVolume(events, targetVolume); return true; }
-
-        var targets = GetBankSources(events);
-        if (targets.Count == 0) return true;
-
-        float t = 0f;
-        bankFades[path] = DOTween.To(() => t, x =>
-        {
-            t = x;
-            foreach (var (source, startVol) in targets)
-                if (source.IsValid()) source.SetVolume(Mathf.Lerp(startVol, targetVolume, t));
-        }, 1f, duration)
-            .SetEase(Ease.Linear)
-            .OnKill(() => bankFades.Remove(path));
-        return true;
-    }
-
     static void ApplyBankVolume(HashSet<string> events, float volume)
     {
         foreach (var s in new List<Audio_Source>(sources))
             if (s != null && s.IsValid() && !string.IsNullOrEmpty(s.EventPath) && events.Contains(s.EventPath))
                 s.SetVolume(volume);
-    }
-
-    static List<(Audio_Source source, float startVolume)> GetBankSources(HashSet<string> events)
-    {
-        var result = new List<(Audio_Source source, float startVolume)>();
-        foreach (var s in new List<Audio_Source>(sources))
-        {
-            if (s == null || !s.IsValid() || string.IsNullOrEmpty(s.EventPath) || !events.Contains(s.EventPath)) continue;
-            s.TryGetVolume(out float v);
-            result.Add((s, v));
-        }
-        return result;
     }
 
     static bool TryGetBankEventPaths(string bankPath, out HashSet<string> events)
@@ -117,7 +79,7 @@ public static class Audio_Master
 
 }
 
-[Serializable]
+[System.Serializable]
 public class Audio_Package
 {
 
@@ -129,27 +91,30 @@ public class Audio_Package
 
 public class Audio_Source
 {
-
     public Audio_Package package;
     EventInstance instance;
     GameObject gameObject;
+    
     public string EventPath { get; private set; }
 
     public static Audio_Source Create(Audio_Package package, Transform target)
     {
         if (package == null)
         {
-            UnityEngine.Debug.LogError($"Audio_Source => No package for \"{target.name}\".");
+            UnityEngine.Debug.LogError($"Mauzik => No package for \"{target.name}\".");
             return null;
         }
+        
         var src = new Audio_Source { package = package, gameObject = target.gameObject };
         src.instance = RuntimeManager.CreateInstance(package.Event);
         RuntimeManager.AttachInstanceToGameObject(src.instance, src.gameObject);
+        
         if (src.instance.isValid() &&
             src.instance.getDescription(out EventDescription desc) == RESULT.OK &&
             desc.isValid() && desc.getPath(out string path) == RESULT.OK)
             src.EventPath = path;
-        Audio_Master.Register(src);
+        
+        Mauzik_Master.Register(src);
         return src;
     }
 
@@ -162,15 +127,15 @@ public class Audio_Source
     public void Stop(bool fadeout = true) =>
         instance.stop(fadeout ? FMOD.Studio.STOP_MODE.ALLOWFADEOUT : FMOD.Studio.STOP_MODE.IMMEDIATE);
 
-    public void Parameter(int index, float value) =>
+    public void SetParameter(int index, float value) =>
         instance.setParameterByName(package.parameters[index], value);
 
-    public void Parameter(string name, float value) =>
+    public void SetParameter(string name, float value) =>
         instance.setParameterByName(name, value);
 
     public void Remove()
     {
-        Audio_Master.Unregister(this);
+        Mauzik_Master.Unregister(this);
         instance.stop(FMOD.Studio.STOP_MODE.IMMEDIATE);
         instance.release();
     }
@@ -192,7 +157,7 @@ public class Audio_Source
         if (instance.getTimelinePosition(out int pos) == RESULT.OK && Mathf.Abs(ms - pos) > 50)
             instance.setTimelinePosition(ms);
     }
-
+    
 }
 
 }
