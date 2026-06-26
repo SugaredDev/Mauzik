@@ -8,7 +8,7 @@ using FMOD;
 namespace Mauzik
 {
 
-public class AudioSource
+public class Audio_Source
 {
     public Audio_Package package;
     EventInstance instance;
@@ -18,7 +18,7 @@ public class AudioSource
 
     // =========================
 
-    public static AudioSource Create(Audio_Package package, Transform target)
+    public static Audio_Source Create(Audio_Package package, Transform target)
     {
         if (package == null)
         {
@@ -26,7 +26,7 @@ public class AudioSource
             return null;
         }
         
-        var src = new AudioSource { package = package, gameObject = target.gameObject };
+        var src = new Audio_Source { package = package, gameObject = target.gameObject };
         src.instance = RuntimeManager.CreateInstance(package.Event);
         RuntimeManager.AttachInstanceToGameObject(src.instance, src.gameObject);
         
@@ -106,7 +106,7 @@ public static class Mauzik_Master
         }
     }
 
-    static readonly HashSet<AudioSource> sources = new();
+    static readonly HashSet<Audio_Source> sources = new();
     static readonly Dictionary<string, HashSet<string>> bankEventPaths = new();
 
     public static Audio_Package Get(string name)
@@ -116,11 +116,11 @@ public static class Mauzik_Master
         return pkg;
     }
 
-    public static AudioSource Attach(string name, Transform target) =>
-        AudioSource.Create(Get(name), target);
+    public static Audio_Source Attach(string name, Transform target) =>
+        Audio_Source.Create(Get(name), target);
 
-    internal static void Register(AudioSource s) { if (s != null) sources.Add(s); }
-    internal static void Unregister(AudioSource s) { if (s != null) sources.Remove(s); }
+    internal static void Register(Audio_Source s) { if (s != null) sources.Add(s); }
+    internal static void Unregister(Audio_Source s) { if (s != null) sources.Remove(s); }
 
     public static bool SetBankVolume(string bankName, float volume)
     {
@@ -131,7 +131,7 @@ public static class Mauzik_Master
 
     static void ApplyBankVolume(HashSet<string> events, float volume)
     {
-        foreach (var s in new List<AudioSource>(sources))
+        foreach (var s in new List<Audio_Source>(sources))
             if (s != null && s.IsValid() && !string.IsNullOrEmpty(s.EventPath) && events.Contains(s.EventPath))
                 s.SetVolume(volume);
     }
