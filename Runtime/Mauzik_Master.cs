@@ -5,6 +5,8 @@ using FMODUnity;
 using FMOD.Studio;
 using FMOD;
 
+using Mauzik;
+
 namespace Mauzik
 {
     

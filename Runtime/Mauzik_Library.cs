@@ -1,5 +1,7 @@
 using UnityEngine;
 
+using Mauzik;
+
 namespace Mauzik
 {
 

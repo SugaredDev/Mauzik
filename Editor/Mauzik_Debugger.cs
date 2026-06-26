@@ -7,6 +7,8 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using FMODUnity;
 
+using Mauzik;
+
 namespace Mauzik.Editor
 {
 
