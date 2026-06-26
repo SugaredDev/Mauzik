@@ -7,6 +7,9 @@ using DG.Tweening;
 using System.Collections.Generic;
 using UnityEngine.UIElements;
 
+namespace Mauzik
+{
+
 public static class Audio_Master
 {
 
@@ -189,5 +192,7 @@ public class Audio_Source
         if (instance.getTimelinePosition(out int pos) == RESULT.OK && Mathf.Abs(ms - pos) > 50)
             instance.setTimelinePosition(ms);
     }
+
+}
 
 }

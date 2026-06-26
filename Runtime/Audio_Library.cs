@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace Mauzik
+{
+
 [CreateAssetMenu(fileName = "Audio_Bank", menuName = "Audio/Bank")]
 public class Audio_Library : ScriptableObject
 {
@@ -12,5 +15,7 @@ public class Audio_Library : ScriptableObject
             if (p.Name == name) return p;
         return null;
     }
+
+}
 
 }

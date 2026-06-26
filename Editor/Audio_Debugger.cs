@@ -7,6 +7,9 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using FMODUnity;
 
+namespace Mauzik
+{
+
 public class Audio_Debugger : EditorWindow
 {
 
@@ -413,5 +416,7 @@ public class Audio_Debugger : EditorWindow
         EditorGUI.DrawRect(r, new Color(0.5f, 0.5f, 0.5f, 0.35f));
         EditorGUILayout.Space(4);
     }
+
+}
 
 }
