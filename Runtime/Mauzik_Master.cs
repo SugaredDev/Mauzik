@@ -5,8 +5,6 @@ using FMODUnity;
 using FMOD.Studio;
 using FMOD;
 
-using Mauzik;
-
 namespace Mauzik
 {
     
@@ -27,7 +25,7 @@ public static class Mauzik_Master
         }
     }
 
-    static readonly HashSet<Audio_Source> sources = new();
+    static readonly HashSet<Source> sources = new();
     static readonly Dictionary<string, HashSet<string>> bankEventPaths = new();
 
     public static Audio_Package Get(string name)
@@ -37,11 +35,11 @@ public static class Mauzik_Master
         return pkg;
     }
 
-    public static Audio_Source Attach(string name, Transform target) =>
-        Audio_Source.Create(Get(name), target);
+    public static Source Attach(string name, Transform target) =>
+        Source.Create(Get(name), target);
 
-    internal static void Register(Audio_Source s) { if (s != null) sources.Add(s); }
-    internal static void Unregister(Audio_Source s) { if (s != null) sources.Remove(s); }
+    internal static void Register(Source s) { if (s != null) sources.Add(s); }
+    internal static void Unregister(Source s) { if (s != null) sources.Remove(s); }
 
     public static bool SetBankVolume(string bankName, float volume)
     {
@@ -52,7 +50,7 @@ public static class Mauzik_Master
 
     static void ApplyBankVolume(HashSet<string> events, float volume)
     {
-        foreach (var s in new List<Audio_Source>(sources))
+        foreach (var s in new List<Source>(sources))
             if (s != null && s.IsValid() && !string.IsNullOrEmpty(s.EventPath) && events.Contains(s.EventPath))
                 s.SetVolume(volume);
     }
@@ -91,7 +89,7 @@ public class Audio_Package
 
 }
 
-public class Audio_Source
+public class Source
 {
     public Audio_Package package;
     EventInstance instance;
@@ -99,7 +97,7 @@ public class Audio_Source
     
     public string EventPath { get; private set; }
 
-    public static Audio_Source Create(Audio_Package package, Transform target)
+    public static Source Create(Audio_Package package, Transform target)
     {
         if (package == null)
         {
@@ -107,7 +105,7 @@ public class Audio_Source
             return null;
         }
         
-        var src = new Audio_Source { package = package, gameObject = target.gameObject };
+        var src = new Source { package = package, gameObject = target.gameObject };
         src.instance = RuntimeManager.CreateInstance(package.Event);
         RuntimeManager.AttachInstanceToGameObject(src.instance, src.gameObject);
         

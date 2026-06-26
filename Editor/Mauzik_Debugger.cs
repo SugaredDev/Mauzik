@@ -20,7 +20,7 @@ public class Mauzik_Debugger : EditorWindow
 
     class ScriptRef { public string path; public int line; public string token; }
 
-    Mauzik_Library bank;
+    Mauzik.Mauzik_Library bank;
     SerializedObject so;
     HashSet<string> scriptPkgRefs = new();
     HashSet<string> scriptParamRefs = new();
