@@ -7,9 +7,9 @@ namespace Mauzik
 public class Mauzik_Library : ScriptableObject
 {
 
-    public Audio_Package[] Packages;
+    public Mauzik_Package[] Packages;
 
-    public Audio_Package Get(string name)
+    public Mauzik_Package Get(string name)
     {
         if (Packages == null) return null;
         foreach (var p in Packages)

@@ -53,7 +53,7 @@ public class Mauzik_Debugger : EditorWindow
         correctRefs.Clear();
 
         var strAssignRe = new Regex(@"(\w+)\s*=\s*""([^""]+)""", RegexOptions.Compiled);
-            var pkgRe = new Regex(@"(?:Audio_Master|Mauzik_Master|Mauzik\.Source)\s*\.\s*(?:Get|Attach)\s*\(\s*(?:""([^""]+)""|(\w+))", RegexOptions.Compiled);
+        var pkgRe = new Regex(@"Audio_Master\s*\.\s*(?:Get|Attach)\s*\(\s*(?:""([^""]+)""|(\w+))", RegexOptions.Compiled);
         var paramRe = new Regex(@"\.SetParameter\s*\(\s*(?:""([^""]+)""|(\w+))", RegexOptions.Compiled);
         var paramIdxRe = new Regex(@"\.SetParameter\s*\(\s*(\d+)\s*,", RegexOptions.Compiled);
 
@@ -282,7 +282,7 @@ public class Mauzik_Debugger : EditorWindow
 
             foreach (var ev in evList)
             {
-                Audio_Package pkg = FindPkg(ev.Path);
+                Mauzik_Package pkg = FindPkg(ev.Path);
                 bool used = pkg != null && scriptPkgRefs.Contains(pkg.Name);
 
                 using (new EditorGUILayout.HorizontalScope())
@@ -320,7 +320,7 @@ public class Mauzik_Debugger : EditorWindow
         }
     }
 
-    Audio_Package FindPkg(string eventPath) =>
+    Mauzik_Package FindPkg(string eventPath) =>
         bank?.Packages?.FirstOrDefault(p => p != null && p.Event.Path == eventPath);
 
     void EnsurePackages()
@@ -335,7 +335,7 @@ public class Mauzik_Debugger : EditorWindow
             ? path.Substring(path.LastIndexOf('/') + 1)
             : path;
 
-        static bool ParamsDirty(Audio_Package pkg, List<EditorParamRef> lp)
+        static bool ParamsDirty(Mauzik_Package pkg, List<EditorParamRef> lp)
         {
             if ((pkg.parameters?.Length ?? 0) != lp.Count) return true;
             for (int i = 0; i < lp.Count; i++)

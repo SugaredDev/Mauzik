@@ -8,9 +8,9 @@ using FMOD;
 namespace Mauzik
 {
 
-public class Audio_Source
+public class Source
 {
-    public Audio_Package package;
+    public Mauzik_Package package;
     EventInstance instance;
     GameObject gameObject;
     
@@ -18,7 +18,7 @@ public class Audio_Source
 
     // =========================
 
-    public static Audio_Source Create(Audio_Package package, Transform target)
+    public static Source Create(Mauzik_Package package, Transform target)
     {
         if (package == null)
         {
@@ -26,7 +26,7 @@ public class Audio_Source
             return null;
         }
         
-        var src = new Audio_Source { package = package, gameObject = target.gameObject };
+        var src = new Source { package = package, gameObject = target.gameObject };
         src.instance = RuntimeManager.CreateInstance(package.Event);
         RuntimeManager.AttachInstanceToGameObject(src.instance, src.gameObject);
         
@@ -35,7 +35,7 @@ public class Audio_Source
             desc.isValid() && desc.getPath(out string path) == RESULT.OK)
             src.EventPath = path;
         
-        Mauzik_Master.Register(src);
+        Master.Register(src);
         return src;
     }
 
@@ -48,15 +48,12 @@ public class Audio_Source
     public void Stop(bool fadeout = true) =>
         instance.stop(fadeout ? FMOD.Studio.STOP_MODE.ALLOWFADEOUT : FMOD.Studio.STOP_MODE.IMMEDIATE);
 
-    public void SetParameter(int index, float value) =>
-        instance.setParameterByName(package.parameters[index], value);
-
-    public void SetParameter(string name, float value) =>
+    public void Parameter(string name, float value) =>
         instance.setParameterByName(name, value);
 
     public void Remove()
     {
-        Mauzik_Master.Unregister(this);
+        Master.Unregister(this);
         instance.stop(FMOD.Studio.STOP_MODE.IMMEDIATE);
         instance.release();
     }
@@ -89,7 +86,7 @@ public class Audio_Source
 
 // ==============================================================================================
     
-public static class Mauzik_Master
+public static class Master
 {
 
     const string LibraryName = "Mauzik_Library";
@@ -106,21 +103,21 @@ public static class Mauzik_Master
         }
     }
 
-    static readonly HashSet<Audio_Source> sources = new();
+    static readonly HashSet<Source> sources = new();
     static readonly Dictionary<string, HashSet<string>> bankEventPaths = new();
 
-    public static Audio_Package Get(string name)
+    public static Mauzik_Package Get(string name)
     {
         var pkg = Data?.Get(name);
         if (pkg == null) UnityEngine.Debug.LogWarning($"Mauzik => Package \"{name}\" not found.");
         return pkg;
     }
 
-    public static Audio_Source Attach(string name, Transform target) =>
-        Audio_Source.Create(Get(name), target);
+    public static Source Attach(string name, Transform target) =>
+        Source.Create(Get(name), target);
 
-    internal static void Register(Audio_Source s) { if (s != null) sources.Add(s); }
-    internal static void Unregister(Audio_Source s) { if (s != null) sources.Remove(s); }
+    internal static void Register(Source s) { if (s != null) sources.Add(s); }
+    internal static void Unregister(Source s) { if (s != null) sources.Remove(s); }
 
     public static bool SetBankVolume(string bankName, float volume)
     {
@@ -131,7 +128,7 @@ public static class Mauzik_Master
 
     static void ApplyBankVolume(HashSet<string> events, float volume)
     {
-        foreach (var s in new List<Audio_Source>(sources))
+        foreach (var s in new List<Source>(sources))
             if (s != null && s.IsValid() && !string.IsNullOrEmpty(s.EventPath) && events.Contains(s.EventPath))
                 s.SetVolume(volume);
     }
@@ -161,7 +158,7 @@ public static class Mauzik_Master
 }
 
     [System.Serializable]
-    public class Audio_Package
+    public class Mauzik_Package
     {
 
         public string Name;
