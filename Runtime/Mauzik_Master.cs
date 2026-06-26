@@ -8,7 +8,7 @@ using FMOD;
 namespace Mauzik
 {
 
-public class Source
+public class Audio
 {
     
     public void Play()
@@ -53,7 +53,7 @@ public class Source
     GameObject gameObject;
     public string EventPath { get; private set; }
 
-    public static Source Attach(Package package, Transform target)
+    public static Audio Attach(Package package, Transform target)
     {
         if (package == null)
         {
@@ -61,7 +61,7 @@ public class Source
             return null;
         }
         
-        var src = new Source { package = package, gameObject = target.gameObject };
+        var src = new Audio { package = package, gameObject = target.gameObject };
         src.instance = RuntimeManager.CreateInstance(package.Event);
         RuntimeManager.AttachInstanceToGameObject(src.instance, src.gameObject);
         
@@ -97,7 +97,7 @@ public static class Library
         }
     }
 
-    static readonly HashSet<Source> sources = new();
+    static readonly HashSet<Audio> sources = new();
     static readonly Dictionary<string, HashSet<string>> bankEventPaths = new();
 
     static Package Get(string name)
@@ -107,11 +107,11 @@ public static class Library
         return pkg;
     }
 
-    public static Source Create(string name, Transform target) =>
-        Source.Attach(Get(name), target);
+    public static Audio Create(string name, Transform target) =>
+        Audio.Attach(Get(name), target);
 
-    internal static void Register(Source s) { if (s != null) sources.Add(s); }
-    internal static void Unregister(Source s) { if (s != null) sources.Remove(s); }
+    internal static void Register(Audio s) { if (s != null) sources.Add(s); }
+    internal static void Unregister(Audio s) { if (s != null) sources.Remove(s); }
 
     public static bool SetBankVolume(string bankName, float volume)
     {
@@ -122,7 +122,7 @@ public static class Library
 
     static void ApplyBankVolume(HashSet<string> events, float volume)
     {
-        foreach (var s in new List<Source>(sources))
+        foreach (var s in new List<Audio>(sources))
             if (s != null && s.IsValid() && !string.IsNullOrEmpty(s.EventPath) && events.Contains(s.EventPath))
                 s.SetVolume(volume);
     }
