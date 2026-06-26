@@ -83,7 +83,7 @@ public class Audio
 public static class Library
 {
 
-    const string LibraryName = "Mauzik_Library";
+    const string LibraryName = "Library";
     static Data data;
     
     static Data Data
