@@ -32,7 +32,7 @@ public class Mauzik_Debugger : EditorWindow
 
     GUIStyle sDotGreen, sDotRed, sDotGray, sSection, sOrphanSection, sMini, sRichMini;
 
-    [MenuItem("Tools/Mauzik (FMOD)")]
+    [MenuItem("Tools/Mauzik (FMOD)", false, 1)]
     static void Open() => GetWindow<Mauzik_Debugger>("Mauzik (FMOD)");
 
     void OnEnable() => RefreshAll();
@@ -180,7 +180,7 @@ public class Mauzik_Debugger : EditorWindow
     {
         EditorGUILayout.Space(8);
         EditorGUILayout.HelpBox($"Mauzik => No Mauzik_Library found at {AssetPath}.", MessageType.Warning);
-        if (GUILayout.Button("Create Mauzik_Library", GUILayout.Height(30)))
+        if (GUILayout.Button("Create the Library", GUILayout.Height(30)))
         {
             Directory.CreateDirectory(ResourcesPath);
             AssetDatabase.Refresh();
