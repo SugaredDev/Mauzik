@@ -15,8 +15,8 @@ namespace Mauzik.Editor
 public class Mauzik_Debugger : EditorWindow
 {
 
-    const string ResourcesPath = "Assets/Mauzik/Resources";
-    const string AssetPath = ResourcesPath + "/Mauzik_Library.asset";
+    const string ResourcesPath = "Assets/Plugins/Mauzik/Resources";
+    const string AssetPath = ResourcesPath + "/Library.asset";
 
     class ScriptRef { public string path; public int line; public string token; }
 
