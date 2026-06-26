@@ -1,0 +1,9 @@
+{
+  "name": "mauzik",
+  "version": "1.0.0",
+  "displayName": "Mauzik",
+  "description": "Friendly FMOD solution for executing events with simplified code solutions.",
+  "author": {
+    "name": "Dawid \"Sugared\" Szarek"
+  }
+}
