@@ -53,7 +53,7 @@ public class Mauzik_Debugger : EditorWindow
         correctRefs.Clear();
 
         var strAssignRe = new Regex(@"(\w+)\s*=\s*""([^""]+)""", RegexOptions.Compiled);
-        var pkgRe = new Regex(@"Audio_Master\s*\.\s*(?:Get|Attach)\s*\(\s*(?:""([^""]+)""|(\w+))", RegexOptions.Compiled);
+            var pkgRe = new Regex(@"(?:Audio_Master|Mauzik_Master|Mauzik\.Source)\s*\.\s*(?:Get|Attach)\s*\(\s*(?:""([^""]+)""|(\w+))", RegexOptions.Compiled);
         var paramRe = new Regex(@"\.SetParameter\s*\(\s*(?:""([^""]+)""|(\w+))", RegexOptions.Compiled);
         var paramIdxRe = new Regex(@"\.SetParameter\s*\(\s*(\d+)\s*,", RegexOptions.Compiled);
 
