@@ -10,7 +10,7 @@ namespace Mauzik
 
 public class Source
 {
-    public Mauzik_Package package;
+    public Package package;
     EventInstance instance;
     GameObject gameObject;
     
@@ -18,7 +18,7 @@ public class Source
 
     // =========================
 
-    public static Source Create(Mauzik_Package package, Transform target)
+    public static Source Create(Package package, Transform target)
     {
         if (package == null)
         {
@@ -35,7 +35,7 @@ public class Source
             desc.isValid() && desc.getPath(out string path) == RESULT.OK)
             src.EventPath = path;
         
-        Master.Register(src);
+        Library.Register(src);
         return src;
     }
 
@@ -53,7 +53,7 @@ public class Source
 
     public void Remove()
     {
-        Master.Unregister(this);
+        Library.Unregister(this);
         instance.stop(FMOD.Studio.STOP_MODE.IMMEDIATE);
         instance.release();
     }
@@ -86,18 +86,18 @@ public class Source
 
 // ==============================================================================================
     
-public static class Master
+public static class Library
 {
 
     const string LibraryName = "Mauzik_Library";
-    static Mauzik_Library data;
+    static Data data;
     
-    static Mauzik_Library Data
+    static Data Data
     {
         get
         {
             if (data != null) return data;
-            data = Resources.Load<Mauzik_Library>(LibraryName);
+            data = Resources.Load<Data>(LibraryName);
             if (data == null) UnityEngine.Debug.LogError($"Mauzik => No {LibraryName} found in Resources. Create one via Tools > Audio Tool.");
             return data;
         }
@@ -106,7 +106,7 @@ public static class Master
     static readonly HashSet<Source> sources = new();
     static readonly Dictionary<string, HashSet<string>> bankEventPaths = new();
 
-    public static Mauzik_Package Get(string name)
+    public static Package Get(string name)
     {
         var pkg = Data?.Get(name);
         if (pkg == null) UnityEngine.Debug.LogWarning($"Mauzik => Package \"{name}\" not found.");
@@ -158,7 +158,7 @@ public static class Master
 }
 
     [System.Serializable]
-    public class Mauzik_Package
+    public class Package
     {
 
         public string Name;

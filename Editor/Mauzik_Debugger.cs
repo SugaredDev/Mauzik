@@ -20,7 +20,7 @@ public class Mauzik_Debugger : EditorWindow
 
     class ScriptRef { public string path; public int line; public string token; }
 
-    Mauzik.Mauzik_Library bank;
+    Mauzik.Data bank;
     SerializedObject so;
     HashSet<string> scriptPkgRefs = new();
     HashSet<string> scriptParamRefs = new();
@@ -39,7 +39,7 @@ public class Mauzik_Debugger : EditorWindow
 
     void RefreshAll()
     {
-        bank = AssetDatabase.LoadAssetAtPath<Mauzik_Library>(AssetPath);
+        bank = AssetDatabase.LoadAssetAtPath<Data>(AssetPath);
         so = bank != null ? new SerializedObject(bank) : null;
         ScanScripts();
         Repaint();
@@ -184,7 +184,7 @@ public class Mauzik_Debugger : EditorWindow
         {
             Directory.CreateDirectory(ResourcesPath);
             AssetDatabase.Refresh();
-            var a = CreateInstance<Mauzik_Library>();
+            var a = CreateInstance<Data>();
             AssetDatabase.CreateAsset(a, AssetPath);
             AssetDatabase.SaveAssets();
             RefreshAll();
@@ -282,7 +282,7 @@ public class Mauzik_Debugger : EditorWindow
 
             foreach (var ev in evList)
             {
-                Mauzik_Package pkg = FindPkg(ev.Path);
+                Package pkg = FindPkg(ev.Path);
                 bool used = pkg != null && scriptPkgRefs.Contains(pkg.Name);
 
                 using (new EditorGUILayout.HorizontalScope())
@@ -320,7 +320,7 @@ public class Mauzik_Debugger : EditorWindow
         }
     }
 
-    Mauzik_Package FindPkg(string eventPath) =>
+    Package FindPkg(string eventPath) =>
         bank?.Packages?.FirstOrDefault(p => p != null && p.Event.Path == eventPath);
 
     void EnsurePackages()
@@ -335,7 +335,7 @@ public class Mauzik_Debugger : EditorWindow
             ? path.Substring(path.LastIndexOf('/') + 1)
             : path;
 
-        static bool ParamsDirty(Mauzik_Package pkg, List<EditorParamRef> lp)
+        static bool ParamsDirty(Package pkg, List<EditorParamRef> lp)
         {
             if ((pkg.parameters?.Length ?? 0) != lp.Count) return true;
             for (int i = 0; i < lp.Count; i++)
@@ -400,7 +400,7 @@ public class Mauzik_Debugger : EditorWindow
     {
         EditorUtility.SetDirty(bank);
         AssetDatabase.SaveAssets();
-        bank = AssetDatabase.LoadAssetAtPath<Mauzik_Library>(AssetPath);
+        bank = AssetDatabase.LoadAssetAtPath<Data>(AssetPath);
         so = bank != null ? new SerializedObject(bank) : null;
         ScanScripts();
         Repaint();
