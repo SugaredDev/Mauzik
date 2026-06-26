@@ -110,12 +110,6 @@ public static class Library
     public static Source Create(string name, Transform target) =>
         Source.Attach(Get(name), target);
 
-    public static Source Create(string name, MonoBehaviour owner) =>
-        Create(name, (Component)(owner != null ? owner.transform : null));
-
-    public static Source Create(string name, Component owner) =>
-        Create(name, (Component)(owner != null ? owner.transform : null));
-
     internal static void Register(Source s) { if (s != null) sources.Add(s); }
     internal static void Unregister(Source s) { if (s != null) sources.Remove(s); }
 
