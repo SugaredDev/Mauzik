@@ -11,6 +11,89 @@ namespace Mauzik
 public static class Mauzik_Master
 {
 
+    public class Source
+    {
+        public Audio_Package package;
+        EventInstance instance;
+        GameObject gameObject;
+        
+        public string EventPath { get; private set; }
+
+        // =========================
+
+        public static Source Create(Audio_Package package, Transform target)
+        {
+            if (package == null)
+            {
+                UnityEngine.Debug.LogError($"Mauzik => No package for \"{target.name}\".");
+                return null;
+            }
+            
+            var src = new Source { package = package, gameObject = target.gameObject };
+            src.instance = RuntimeManager.CreateInstance(package.Event);
+            RuntimeManager.AttachInstanceToGameObject(src.instance, src.gameObject);
+            
+            if (src.instance.isValid() &&
+                src.instance.getDescription(out EventDescription desc) == RESULT.OK &&
+                desc.isValid() && desc.getPath(out string path) == RESULT.OK)
+                src.EventPath = path;
+            
+            Mauzik_Master.Register(src);
+            return src;
+        }
+
+        public void Play()
+        {
+            RuntimeManager.AttachInstanceToGameObject(instance, gameObject);
+            instance.start();
+        }
+
+        public void Stop(bool fadeout = true) =>
+            instance.stop(fadeout ? FMOD.Studio.STOP_MODE.ALLOWFADEOUT : FMOD.Studio.STOP_MODE.IMMEDIATE);
+
+        public void SetParameter(int index, float value) =>
+            instance.setParameterByName(package.parameters[index], value);
+
+        public void SetParameter(string name, float value) =>
+            instance.setParameterByName(name, value);
+
+        public void Remove()
+        {
+            Mauzik_Master.Unregister(this);
+            instance.stop(FMOD.Studio.STOP_MODE.IMMEDIATE);
+            instance.release();
+        }
+
+        // =========================
+
+        public bool SetVolume(float volume) =>
+            instance.isValid() && instance.setVolume(Mathf.Clamp01(volume)) == RESULT.OK;
+
+        public bool TryGetVolume(out float volume)
+        {
+            volume = 1f;
+            return instance.isValid() && instance.getVolume(out volume) == RESULT.OK;
+        }
+
+        // =========================
+
+        public void Sync(int ms)
+        {
+            if (!instance.isValid()) return;
+            if (instance.getTimelinePosition(out int pos) == RESULT.OK && Mathf.Abs(ms - pos) > 50)
+                instance.setTimelinePosition(ms);
+        }
+
+        // =========================
+
+        public bool IsValid() => instance.isValid();
+        
+    }
+
+    // ==============================================================================================
+
+
+
     const string LibraryName = "Mauzik_Library";
     static Mauzik_Library data;
     
@@ -79,85 +162,14 @@ public static class Mauzik_Master
 
 }
 
-[System.Serializable]
-public class Audio_Package
-{
-
-    public string Name;
-    public EventReference Event;
-    public string[] parameters;
-
-}
-
-public class Source
-{
-    public Audio_Package package;
-    EventInstance instance;
-    GameObject gameObject;
-    
-    public string EventPath { get; private set; }
-
-    public static Source Create(Audio_Package package, Transform target)
+    [System.Serializable]
+    public class Audio_Package
     {
-        if (package == null)
-        {
-            UnityEngine.Debug.LogError($"Mauzik => No package for \"{target.name}\".");
-            return null;
-        }
-        
-        var src = new Source { package = package, gameObject = target.gameObject };
-        src.instance = RuntimeManager.CreateInstance(package.Event);
-        RuntimeManager.AttachInstanceToGameObject(src.instance, src.gameObject);
-        
-        if (src.instance.isValid() &&
-            src.instance.getDescription(out EventDescription desc) == RESULT.OK &&
-            desc.isValid() && desc.getPath(out string path) == RESULT.OK)
-            src.EventPath = path;
-        
-        Mauzik_Master.Register(src);
-        return src;
+
+        public string Name;
+        public EventReference Event;
+        public string[] parameters;
+
     }
-
-    public void Play()
-    {
-        RuntimeManager.AttachInstanceToGameObject(instance, gameObject);
-        instance.start();
-    }
-
-    public void Stop(bool fadeout = true) =>
-        instance.stop(fadeout ? FMOD.Studio.STOP_MODE.ALLOWFADEOUT : FMOD.Studio.STOP_MODE.IMMEDIATE);
-
-    public void SetParameter(int index, float value) =>
-        instance.setParameterByName(package.parameters[index], value);
-
-    public void SetParameter(string name, float value) =>
-        instance.setParameterByName(name, value);
-
-    public void Remove()
-    {
-        Mauzik_Master.Unregister(this);
-        instance.stop(FMOD.Studio.STOP_MODE.IMMEDIATE);
-        instance.release();
-    }
-
-    public bool IsValid() => instance.isValid();
-
-    public bool SetVolume(float volume) =>
-        instance.isValid() && instance.setVolume(Mathf.Clamp01(volume)) == RESULT.OK;
-
-    public bool TryGetVolume(out float volume)
-    {
-        volume = 1f;
-        return instance.isValid() && instance.getVolume(out volume) == RESULT.OK;
-    }
-
-    public void Sync(int ms)
-    {
-        if (!instance.isValid()) return;
-        if (instance.getTimelinePosition(out int pos) == RESULT.OK && Mathf.Abs(ms - pos) > 50)
-            instance.setTimelinePosition(ms);
-    }
-    
-}
 
 }
