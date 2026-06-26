@@ -53,7 +53,7 @@ public class Source
     GameObject gameObject;
     public string EventPath { get; private set; }
 
-    public static Source Create(Package package, Transform target)
+    public static Source Attach(Package package, Transform target)
     {
         if (package == null)
         {
@@ -107,8 +107,14 @@ public static class Library
         return pkg;
     }
 
-    public static Source Attach(string name, Transform target) =>
-        Source.Create(Get(name), target);
+    public static Source Create(string name, Transform target) =>
+        Source.Attach(Get(name), target);
+
+    public static Source Create(string name, MonoBehaviour owner) =>
+        Create(name, (Component)(owner != null ? owner.transform : null));
+
+    public static Source Create(string name, Component owner) =>
+        Create(name, (Component)(owner != null ? owner.transform : null));
 
     internal static void Register(Source s) { if (s != null) sources.Add(s); }
     internal static void Unregister(Source s) { if (s != null) sources.Remove(s); }
