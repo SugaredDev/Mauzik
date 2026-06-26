@@ -10,13 +10,48 @@ namespace Mauzik
 
 public class Source
 {
+    
+    public void Play()
+    {
+        RuntimeManager.AttachInstanceToGameObject(instance, gameObject);
+        instance.start();
+    }
+
+    public void Stop(bool fadeout = true) =>
+        instance.stop(fadeout ? FMOD.Studio.STOP_MODE.ALLOWFADEOUT : FMOD.Studio.STOP_MODE.IMMEDIATE);
+
+    public void Parameter(string name, float value) =>
+        instance.setParameterByName(name, value);
+
+    public void Remove()
+    {
+        Library.Unregister(this);
+        instance.stop(FMOD.Studio.STOP_MODE.IMMEDIATE);
+        instance.release();
+    }
+
+    public bool SetVolume(float volume) =>
+        instance.isValid() && instance.setVolume(Mathf.Clamp01(volume)) == RESULT.OK;
+
+    public bool GetVolume(out float volume)
+    {
+        volume = 1f;
+        return instance.isValid() && instance.getVolume(out volume) == RESULT.OK;
+    }
+
+    public void Sync(int ms)
+    {
+        if (!instance.isValid()) return;
+        if (instance.getTimelinePosition(out int pos) == RESULT.OK && Mathf.Abs(ms - pos) > 50)
+            instance.setTimelinePosition(ms);
+    }
+
+    // =========================
+
     public Package package;
     EventInstance instance;
     GameObject gameObject;
-    
     public string EventPath { get; private set; }
-
-    // =========================
 
     public static Source Create(Package package, Transform target)
     {
@@ -38,47 +73,6 @@ public class Source
         Library.Register(src);
         return src;
     }
-
-    public void Play()
-    {
-        RuntimeManager.AttachInstanceToGameObject(instance, gameObject);
-        instance.start();
-    }
-
-    public void Stop(bool fadeout = true) =>
-        instance.stop(fadeout ? FMOD.Studio.STOP_MODE.ALLOWFADEOUT : FMOD.Studio.STOP_MODE.IMMEDIATE);
-
-    public void Parameter(string name, float value) =>
-        instance.setParameterByName(name, value);
-
-    public void Remove()
-    {
-        Library.Unregister(this);
-        instance.stop(FMOD.Studio.STOP_MODE.IMMEDIATE);
-        instance.release();
-    }
-
-    // =========================
-
-    public bool SetVolume(float volume) =>
-        instance.isValid() && instance.setVolume(Mathf.Clamp01(volume)) == RESULT.OK;
-
-    public bool TryGetVolume(out float volume)
-    {
-        volume = 1f;
-        return instance.isValid() && instance.getVolume(out volume) == RESULT.OK;
-    }
-
-    // =========================
-
-    public void Sync(int ms)
-    {
-        if (!instance.isValid()) return;
-        if (instance.getTimelinePosition(out int pos) == RESULT.OK && Mathf.Abs(ms - pos) > 50)
-            instance.setTimelinePosition(ms);
-    }
-
-    // =========================
 
     public bool IsValid() => instance.isValid();
     
@@ -106,7 +100,7 @@ public static class Library
     static readonly HashSet<Source> sources = new();
     static readonly Dictionary<string, HashSet<string>> bankEventPaths = new();
 
-    public static Package Get(string name)
+    static Package Get(string name)
     {
         var pkg = Data?.Get(name);
         if (pkg == null) UnityEngine.Debug.LogWarning($"Mauzik => Package \"{name}\" not found.");
