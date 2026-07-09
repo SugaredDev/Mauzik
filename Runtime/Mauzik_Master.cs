@@ -22,10 +22,10 @@ public class Audio
     public void Parameter(string name, float value) =>
         instance.setParameterByName(name, value);
 
-    public void Remove()
+    public void Remove(bool hardStop = false)
     {
         Library.Unregister(this);
-        instance.stop(FMOD.Studio.STOP_MODE.IMMEDIATE);
+        instance.stop(hardStop ? FMOD.Studio.STOP_MODE.IMMEDIATE : FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
         instance.release();
     }
 
