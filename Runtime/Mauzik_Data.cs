@@ -4,12 +4,12 @@ namespace Mauzik
 {
 
 [CreateAssetMenu(fileName = "Mauzik_Library", menuName = "Audio/Library")]
-public class Data : ScriptableObject
+public class Mauzik_Data : ScriptableObject
 {
 
-    public Package[] Packages;
+    public Mauzik_Package[] Packages;
 
-    public Package Get(string name)
+    public Mauzik_Package Get(string name)
     {
         if (Packages == null) return null;
         foreach (var p in Packages)

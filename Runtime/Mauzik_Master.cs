@@ -27,10 +27,10 @@ public class Audio
 
     // =========================
 
-    public Package package;
+    public Mauzik_Package package;
     EventInstance instance;
 
-    public static Audio Attach(Transform target, Package package)
+    public static Audio Attach(Transform target, Mauzik_Package package)
     {
         if (package == null)
         {
@@ -71,20 +71,20 @@ public static class Library
     // =========================
 
     const string LibraryName = "Library";
-    static Data data;
+    static Mauzik_Data data;
     
-    static Data Data
+    static Mauzik_Data Data
     {
         get
         {
             if (data != null) return data;
-            data = Resources.Load<Data>(LibraryName);
+            data = Resources.Load<Mauzik_Data>(LibraryName);
             if (data == null) UnityEngine.Debug.LogError($"Mauzik => No {LibraryName} found in Resources. Create one via Tools > Audio Tool.");
             return data;
         }
     }
 
-    static Package Get(string name)
+    static Mauzik_Package Get(string name)
     {
         var pkg = Data?.Get(name);
         if (pkg == null) UnityEngine.Debug.LogWarning($"Mauzik => Package \"{name}\" not found.");
@@ -98,7 +98,7 @@ public static class Library
 }
 
     [System.Serializable]
-    public class Package
+    public class Mauzik_Package
     {
 
         public string Name;

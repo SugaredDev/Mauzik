@@ -20,8 +20,7 @@ public class Mauzik_Debugger : EditorWindow
 
     class ScriptRef { public string path; public int line; public string token; }
 
-    Mauzik.Data bank;
-    SerializedObject so;
+    Mauzik.Mauzik_Data bank;
     HashSet<string> scriptPkgRefs = new();
     HashSet<string> scriptParamRefs = new();
     List<ScriptRef> orphans = new();
@@ -32,15 +31,14 @@ public class Mauzik_Debugger : EditorWindow
 
     GUIStyle sDotGreen, sDotRed, sDotGray, sSection, sOrphanSection, sMini, sRichMini;
 
-    [MenuItem("Tools/Mauzik (FMOD)", false, 1)]
+    [MenuItem("Tools/Mauzik (FMOD)/Debbuger", false, 1)]
     static void Open() => GetWindow<Mauzik_Debugger>("Mauzik (FMOD)");
 
     void OnEnable() => RefreshAll();
 
     void RefreshAll()
     {
-        bank = AssetDatabase.LoadAssetAtPath<Data>(AssetPath);
-        so = bank != null ? new SerializedObject(bank) : null;
+        bank = AssetDatabase.LoadAssetAtPath<Mauzik_Data>(AssetPath);
         ScanScripts();
         Repaint();
     }
@@ -52,10 +50,11 @@ public class Mauzik_Debugger : EditorWindow
         orphans.Clear();
         correctRefs.Clear();
 
-        var strAssignRe = new Regex(@"(\w+)\s*=\s*""([^""]+)""", RegexOptions.Compiled);
-        var pkgRe = new Regex(@"(?:Audio|Library)\s*\.\s*(?:Get|Attach|Create)\s*\(\s*(?:""([^""]+)""|(\w+))", RegexOptions.Compiled);
+        var strAssignRe = new Regex(@"(?:^|[^\w])(?:string\s+)?(\w+)\s*=\s*""([^""\r\n]+)""", RegexOptions.Compiled);
+        var pkgRe = new Regex(@"(?:Audio|Library)\s*\.\s*(?:Play|Attach|Get)\s*\(\s*(?:[^,]+,\s*)?(?:""([^""]+)""|(\w+))", RegexOptions.Compiled);
         var paramRe = new Regex(@"\.Parameter\s*\(\s*(?:""([^""]+)""|(\w+))", RegexOptions.Compiled);
         var paramIdxRe = new Regex(@"\.Parameter\s*\(\s*(\d+)\s*,", RegexOptions.Compiled);
+        var lineCommentRe = new Regex(@"//.*$", RegexOptions.Multiline | RegexOptions.Compiled);
 
         var validParamNames = bank?.Packages?
             .Where(p => p?.parameters != null)
@@ -76,6 +75,7 @@ public class Mauzik_Debugger : EditorWindow
             
             string src;
             try { src = File.ReadAllText(ap); } catch { continue; }
+            src = lineCommentRe.Replace(src, string.Empty);
 
             var stringVars = new Dictionary<string, string>();
             foreach (Match m in strAssignRe.Matches(src))
@@ -184,7 +184,7 @@ public class Mauzik_Debugger : EditorWindow
         {
             Directory.CreateDirectory(ResourcesPath);
             AssetDatabase.Refresh();
-            var a = CreateInstance<Data>();
+            var a = CreateInstance<Mauzik_Data>();
             AssetDatabase.CreateAsset(a, AssetPath);
             AssetDatabase.SaveAssets();
             RefreshAll();
@@ -253,8 +253,6 @@ public class Mauzik_Debugger : EditorWindow
             return;
         }
 
-        EnsurePackages();
-
         var allEvents = EventManager.Events?
             .Where(e => e != null && !string.IsNullOrEmpty(e.Path) && e.Path.StartsWith("event:/"))
             .ToList() ?? new List<EditorEventRef>();
@@ -282,7 +280,7 @@ public class Mauzik_Debugger : EditorWindow
 
             foreach (var ev in evList)
             {
-                Package pkg = FindPkg(ev.Path);
+                Mauzik_Package pkg = FindPkg(ev.Path);
                 bool used = pkg != null && scriptPkgRefs.Contains(pkg.Name);
 
                 using (new EditorGUILayout.HorizontalScope())
@@ -320,91 +318,8 @@ public class Mauzik_Debugger : EditorWindow
         }
     }
 
-    Package FindPkg(string eventPath) =>
+    Mauzik_Package FindPkg(string eventPath) =>
         bank?.Packages?.FirstOrDefault(p => p != null && p.Event.Path == eventPath);
-
-    void EnsurePackages()
-    {
-        if (!EventManager.IsLoaded || bank == null || so == null) return;
-
-        var allEvents = EventManager.Events?
-            .Where(e => e != null && !string.IsNullOrEmpty(e.Path) && e.Path.StartsWith("event:/"))
-            .ToList() ?? new List<EditorEventRef>();
-
-        static string FinalName(string path) => path.Contains('/')
-            ? path.Substring(path.LastIndexOf('/') + 1)
-            : path;
-
-        static bool ParamsDirty(Package pkg, List<EditorParamRef> lp)
-        {
-            if ((pkg.parameters?.Length ?? 0) != lp.Count) return true;
-            for (int i = 0; i < lp.Count; i++)
-                if ((pkg.parameters?[i] ?? "") != lp[i].Name) return true;
-            return false;
-        }
-
-        bool needsWork = allEvents.Any(ev =>
-        {
-            var pkg = FindPkg(ev.Path);
-            if (pkg == null) return true;
-            var lp = ev.LocalParameters ?? new List<EditorParamRef>();
-            return pkg.Name != FinalName(ev.Path) || ParamsDirty(pkg, lp);
-        });
-        if (!needsWork) return;
-
-        so.Update();
-        var arr = so.FindProperty("Packages");
-
-        foreach (var ev in allEvents)
-        {
-            string name = FinalName(ev.Path);
-            var lp = ev.LocalParameters ?? new List<EditorParamRef>();
-            var pkg = FindPkg(ev.Path);
-
-            if (pkg == null)
-            {
-                Undo.RecordObject(bank, "Auto-add Audio Package");
-                arr.arraySize++;
-                var elem = arr.GetArrayElementAtIndex(arr.arraySize - 1);
-                elem.FindPropertyRelative("Name").stringValue = name;
-                elem.FindPropertyRelative("Event").SetEventReference(ev.Guid, ev.Path);
-                var paramP = elem.FindPropertyRelative("parameters");
-                paramP.arraySize = lp.Count;
-                for (int i = 0; i < lp.Count; i++)
-                    paramP.GetArrayElementAtIndex(i).stringValue = lp[i].Name;
-            }
-            else if (pkg.Name != name || ParamsDirty(pkg, lp))
-            {
-                for (int i = 0; i < arr.arraySize; i++)
-                {
-                    var elem = arr.GetArrayElementAtIndex(i);
-                    if (elem.FindPropertyRelative("Event").GetEventReferencePath() == ev.Path)
-                    {
-                        Undo.RecordObject(bank, "Sync Audio Package");
-                        elem.FindPropertyRelative("Name").stringValue = name;
-                        var paramP = elem.FindPropertyRelative("parameters");
-                        paramP.arraySize = lp.Count;
-                        for (int j = 0; j < lp.Count; j++)
-                            paramP.GetArrayElementAtIndex(j).stringValue = lp[j].Name;
-                        break;
-                    }
-                }
-            }
-        }
-
-        so.ApplyModifiedProperties();
-        Commit();
-    }
-
-    void Commit()
-    {
-        EditorUtility.SetDirty(bank);
-        AssetDatabase.SaveAssets();
-        bank = AssetDatabase.LoadAssetAtPath<Data>(AssetPath);
-        so = bank != null ? new SerializedObject(bank) : null;
-        ScanScripts();
-        Repaint();
-    }
 
     static void Divider()
     {
