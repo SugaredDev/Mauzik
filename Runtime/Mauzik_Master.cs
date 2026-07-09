@@ -13,12 +13,11 @@ public class Audio
     
     public void Play()
     {
-        RuntimeManager.AttachInstanceToGameObject(instance, gameObject);
         instance.start();
     }
 
-    public void Stop(bool fadeout = true) =>
-        instance.stop(fadeout ? FMOD.Studio.STOP_MODE.ALLOWFADEOUT : FMOD.Studio.STOP_MODE.IMMEDIATE);
+    public void Stop(bool hardStop = false) =>
+        instance.stop(hardStop ? FMOD.Studio.STOP_MODE.IMMEDIATE : FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
 
     public void Parameter(string name, float value) =>
         instance.setParameterByName(name, value);
@@ -53,11 +52,11 @@ public class Audio
     GameObject gameObject;
     public string EventPath { get; private set; }
 
-    public static Audio Attach(Package package, Transform target)
+    public static Audio Attach(Transform target, Package package)
     {
         if (package == null)
         {
-            UnityEngine.Debug.LogError($"Mauzik => No package for \"{target.name}\".");
+            UnityEngine.Debug.LogError($"Mauzik => Attach called with null package.");
             return null;
         }
         
@@ -107,15 +106,36 @@ public static class Library
         return pkg;
     }
 
-    public static Audio Create(string name, Transform target) =>
-        Audio.Attach(Get(name), target);
+    public static Audio Create(Transform target, string event_name, string parameter_name = null, float parameter_value = 0f)
+    {
+        var audio = Audio.Attach(target, Get(event_name));
+        if (audio != null && !string.IsNullOrEmpty(parameter_name))
+            audio.Parameter(parameter_name, parameter_value);
+        return audio;
+    }
+
+    public static void OneShot(Transform target, string event_name, string parameter_name = null, float parameter_value = 0f)
+    {
+        var pkg = Get(event_name);
+        if (pkg == null) return;
+
+        var inst = RuntimeManager.CreateInstance(pkg.Event);
+        if (!inst.isValid()) return;
+
+        if (!string.IsNullOrEmpty(parameter_name))
+            inst.setParameterByName(parameter_name, parameter_value);
+
+        RuntimeManager.AttachInstanceToGameObject(inst, target.gameObject);
+        inst.start();
+        inst.release();
+    }
 
     internal static void Register(Audio s) { if (s != null) sources.Add(s); }
     internal static void Unregister(Audio s) { if (s != null) sources.Remove(s); }
 
-    public static bool SetBankVolume(string bankName, float volume)
+    public static bool SetBankVolume(string bank, float volume)
     {
-        if (!TryGetBankEventPaths(NormalizeBankPath(bankName), out var events)) return false;
+        if (!TryGetBankEventPaths(NormalizeBankPath(bank), out var events)) return false;
         ApplyBankVolume(events, Mathf.Clamp01(volume));
         return true;
     }
