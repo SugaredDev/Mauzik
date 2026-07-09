@@ -11,23 +11,16 @@ namespace Mauzik
 public class Audio
 {
     
-    public void Play()
-    {
-        instance.start();
-    }
-
-    public void Stop(bool hardStop = false) =>
-        instance.stop(hardStop ? FMOD.Studio.STOP_MODE.IMMEDIATE : FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
-
-    public void Parameter(string name, float value) =>
-        instance.setParameterByName(name, value);
-
-    public void Remove(bool hardStop = false)
+    // Audio Play(Transform target, string event_name, string parameter_name = null, float parameter_value = 0f)
+    
+    public void Stop(bool hardStop = false)
     {
         Library.Unregister(this);
         instance.stop(hardStop ? FMOD.Studio.STOP_MODE.IMMEDIATE : FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
-        instance.release();
     }
+
+    public void Parameter(string name, float value) =>
+        instance.setParameterByName(name, value);
 
     public bool SetVolume(float volume) =>
         instance.isValid() && instance.setVolume(Mathf.Clamp01(volume)) == RESULT.OK;
@@ -69,6 +62,8 @@ public class Audio
             desc.isValid() && desc.getPath(out string path) == RESULT.OK)
             src.EventPath = path;
         
+        src.instance.start();
+        src.instance.release();
         Library.Register(src);
         return src;
     }
@@ -106,28 +101,12 @@ public static class Library
         return pkg;
     }
 
-    public static Audio Create(Transform target, string event_name, string parameter_name = null, float parameter_value = 0f)
+    public static Audio Play(Transform target, string event_name, string parameter_name = null, float parameter_value = 0f)
     {
         var audio = Audio.Attach(target, Get(event_name));
         if (audio != null && !string.IsNullOrEmpty(parameter_name))
             audio.Parameter(parameter_name, parameter_value);
         return audio;
-    }
-
-    public static void OneShot(Transform target, string event_name, string parameter_name = null, float parameter_value = 0f)
-    {
-        var pkg = Get(event_name);
-        if (pkg == null) return;
-
-        var inst = RuntimeManager.CreateInstance(pkg.Event);
-        if (!inst.isValid()) return;
-
-        if (!string.IsNullOrEmpty(parameter_name))
-            inst.setParameterByName(parameter_name, parameter_value);
-
-        RuntimeManager.AttachInstanceToGameObject(inst, target.gameObject);
-        inst.start();
-        inst.release();
     }
 
     internal static void Register(Audio s) { if (s != null) sources.Add(s); }
