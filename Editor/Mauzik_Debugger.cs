@@ -16,7 +16,7 @@ public class Mauzik_Debugger : EditorWindow
 {
 
     const string ResourcesPath = "Assets/Plugins/Mauzik/Resources";
-    const string AssetPath = ResourcesPath + "/Library.asset";
+    const string AssetPath = Mauzik_Watcher.AssetPath;
 
     class ScriptRef { public string path; public int line; public string token; }
 
@@ -31,17 +31,24 @@ public class Mauzik_Debugger : EditorWindow
 
     GUIStyle sDotGreen, sDotRed, sDotGray, sSection, sOrphanSection, sMini, sRichMini;
 
-    [MenuItem("Tools/Mauzik (FMOD)/Debbuger", false, 1)]
+    [MenuItem("Tools/Mauzik (FMOD)/Debbuger", false, 2)]
     static void Open() => GetWindow<Mauzik_Debugger>("Mauzik (FMOD)");
 
     void OnEnable() => RefreshAll();
 
     void RefreshAll()
     {
+        Mauzik_Watcher.UpdateLibrary();
         bank = AssetDatabase.LoadAssetAtPath<Mauzik_Data>(AssetPath);
         ScanScripts();
         Repaint();
     }
+
+    static readonly Regex strAssignRe  = new Regex(@"(?:^|[^\w])(?:string\s+)?(\w+)\s*=\s*""([^""\r\n]+)""", RegexOptions.Compiled);
+    static readonly Regex pkgRe         = new Regex(@"(?:Audio|Library)\s*\.\s*(?:Play|Attach|Get)\s*\(\s*(?:[^,]+,\s*)?(?:""([^""]+)""|([\w]+))", RegexOptions.Compiled);
+    static readonly Regex paramRe       = new Regex(@"\.Parameter\s*\(\s*(?:""([^""]+)""|([\w]+))", RegexOptions.Compiled);
+    static readonly Regex paramIdxRe    = new Regex(@"\.Parameter\s*\(\s*(\d+)\s*,", RegexOptions.Compiled);
+    static readonly Regex lineCommentRe = new Regex(@"//.*$", RegexOptions.Multiline | RegexOptions.Compiled);
 
     void ScanScripts()
     {
@@ -49,12 +56,6 @@ public class Mauzik_Debugger : EditorWindow
         scriptParamRefs.Clear();
         orphans.Clear();
         correctRefs.Clear();
-
-        var strAssignRe = new Regex(@"(?:^|[^\w])(?:string\s+)?(\w+)\s*=\s*""([^""\r\n]+)""", RegexOptions.Compiled);
-        var pkgRe = new Regex(@"(?:Audio|Library)\s*\.\s*(?:Play|Attach|Get)\s*\(\s*(?:[^,]+,\s*)?(?:""([^""]+)""|(\w+))", RegexOptions.Compiled);
-        var paramRe = new Regex(@"\.Parameter\s*\(\s*(?:""([^""]+)""|(\w+))", RegexOptions.Compiled);
-        var paramIdxRe = new Regex(@"\.Parameter\s*\(\s*(\d+)\s*,", RegexOptions.Compiled);
-        var lineCommentRe = new Regex(@"//.*$", RegexOptions.Multiline | RegexOptions.Compiled);
 
         var validParamNames = bank?.Packages?
             .Where(p => p?.parameters != null)

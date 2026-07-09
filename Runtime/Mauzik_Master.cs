@@ -62,7 +62,7 @@ public static class Library
         return audio;
     }
 
-    public static bool SetVolume(float bank_volume, string bank_name = "Master")
+    public static bool SetVolume(float bank_volume, string bank_name = null)
     {
         Bus bus = RuntimeManager.GetBus(NormalizeBusPath(bank_name));
         return bus.isValid() && bus.setVolume(Mathf.Clamp01(bank_volume)) == RESULT.OK;
