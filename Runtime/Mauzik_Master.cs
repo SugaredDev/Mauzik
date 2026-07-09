@@ -1,6 +1,5 @@
 using UnityEngine;
 using System;
-using System.Collections.Generic;
 using FMODUnity;
 using FMOD.Studio;
 using FMOD;
@@ -10,26 +9,14 @@ namespace Mauzik
 
 public class Audio
 {
+
+    // =========================
     
-    // Audio Play(Transform target, string event_name, string parameter_name = null, float parameter_value = 0f)
-    
-    public void Stop(bool hardStop = false)
-    {
-        Library.Unregister(this);
+    public void Stop(bool hardStop = false) =>
         instance.stop(hardStop ? FMOD.Studio.STOP_MODE.IMMEDIATE : FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
-    }
 
     public void Parameter(string name, float value) =>
         instance.setParameterByName(name, value);
-
-    public bool SetVolume(float volume) =>
-        instance.isValid() && instance.setVolume(Mathf.Clamp01(volume)) == RESULT.OK;
-
-    public bool GetVolume(out float volume)
-    {
-        volume = 1f;
-        return instance.isValid() && instance.getVolume(out volume) == RESULT.OK;
-    }
 
     public void Sync(int ms)
     {
@@ -42,8 +29,6 @@ public class Audio
 
     public Package package;
     EventInstance instance;
-    GameObject gameObject;
-    public string EventPath { get; private set; }
 
     public static Audio Attach(Transform target, Package package)
     {
@@ -53,29 +38,37 @@ public class Audio
             return null;
         }
         
-        var src = new Audio { package = package, gameObject = target.gameObject };
+        var src = new Audio { package = package };
         src.instance = RuntimeManager.CreateInstance(package.Event);
-        RuntimeManager.AttachInstanceToGameObject(src.instance, src.gameObject);
-        
-        if (src.instance.isValid() &&
-            src.instance.getDescription(out EventDescription desc) == RESULT.OK &&
-            desc.isValid() && desc.getPath(out string path) == RESULT.OK)
-            src.EventPath = path;
+        RuntimeManager.AttachInstanceToGameObject(src.instance, target.gameObject);
         
         src.instance.start();
         src.instance.release();
-        Library.Register(src);
         return src;
     }
-
-    public bool IsValid() => instance.isValid();
     
 }
-
-// ==============================================================================================
     
 public static class Library
 {
+
+    // =========================
+
+    public static Audio Play(Transform target, string event_name, string parameter_name = null, float parameter_value = 0f)
+    {
+        var audio = Audio.Attach(target, Get(event_name));
+        if (audio != null && !string.IsNullOrEmpty(parameter_name))
+            audio.Parameter(parameter_name, parameter_value);
+        return audio;
+    }
+
+    public static bool SetVolume(float bank_volume, string bank_name = "Master")
+    {
+        Bus bus = RuntimeManager.GetBus(NormalizeBusPath(bank_name));
+        return bus.isValid() && bus.setVolume(Mathf.Clamp01(bank_volume)) == RESULT.OK;
+    }
+
+    // =========================
 
     const string LibraryName = "Library";
     static Data data;
@@ -91,9 +84,6 @@ public static class Library
         }
     }
 
-    static readonly HashSet<Audio> sources = new();
-    static readonly Dictionary<string, HashSet<string>> bankEventPaths = new();
-
     static Package Get(string name)
     {
         var pkg = Data?.Get(name);
@@ -101,52 +91,9 @@ public static class Library
         return pkg;
     }
 
-    public static Audio Play(Transform target, string event_name, string parameter_name = null, float parameter_value = 0f)
-    {
-        var audio = Audio.Attach(target, Get(event_name));
-        if (audio != null && !string.IsNullOrEmpty(parameter_name))
-            audio.Parameter(parameter_name, parameter_value);
-        return audio;
-    }
-
-    internal static void Register(Audio s) { if (s != null) sources.Add(s); }
-    internal static void Unregister(Audio s) { if (s != null) sources.Remove(s); }
-
-    public static bool SetBankVolume(string bank, float volume)
-    {
-        if (!TryGetBankEventPaths(NormalizeBankPath(bank), out var events)) return false;
-        ApplyBankVolume(events, Mathf.Clamp01(volume));
-        return true;
-    }
-
-    static void ApplyBankVolume(HashSet<string> events, float volume)
-    {
-        foreach (var s in new List<Audio>(sources))
-            if (s != null && s.IsValid() && !string.IsNullOrEmpty(s.EventPath) && events.Contains(s.EventPath))
-                s.SetVolume(volume);
-    }
-
-    static bool TryGetBankEventPaths(string bankPath, out HashSet<string> events)
-    {
-        if (bankEventPaths.TryGetValue(bankPath, out events)) return events?.Count > 0;
-
-        events = new HashSet<string>();
-        if (RuntimeManager.StudioSystem.getBank(bankPath, out Bank fmodBank) != RESULT.OK || !fmodBank.isValid())
-            return false;
-        if (fmodBank.getEventList(out EventDescription[] descs) != RESULT.OK || descs == null)
-            return false;
-
-        foreach (var desc in descs)
-            if (desc.isValid() && desc.getPath(out string p) == RESULT.OK && !string.IsNullOrEmpty(p))
-                events.Add(p);
-
-        bankEventPaths[bankPath] = events;
-        return events.Count > 0;
-    }
-
-    static string NormalizeBankPath(string name) =>
-        string.IsNullOrWhiteSpace(name) ? "bank:/Master" :
-        name.StartsWith("bank:/", StringComparison.OrdinalIgnoreCase) ? name : $"bank:/{name}";
+    static string NormalizeBusPath(string name) =>
+        string.IsNullOrWhiteSpace(name) ? "bus:/Master" :
+        name.StartsWith("bus:/", StringComparison.OrdinalIgnoreCase) ? name : $"bus:/{name}";
 
 }
 
