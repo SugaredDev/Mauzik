@@ -3,7 +3,6 @@ using UnityEngine;
 namespace Mauzik
 {
 
-[CreateAssetMenu(fileName = "Mauzik_Library", menuName = "Audio/Library")]
 public class Mauzik_Data : ScriptableObject
 {
 

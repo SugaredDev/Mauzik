@@ -11,7 +11,7 @@ namespace Mauzik.Editor
 public static class Mauzik_Watcher
 {
 
-    internal const string AssetPath = "Assets/Plugins/Mauzik/Resources/Library.asset";
+    internal const string AssetPath = "Assets/Plugins/Mauzik/Resources/Mauzik_Library.asset";
     static bool isSyncing;
 
     internal static void UpdateLibrary()
@@ -96,7 +96,7 @@ public static class Mauzik_Watcher
         finally 
         { 
             isSyncing = false;
-            Debug.Log("Mauzik => Updated the FMOD Library."); 
+            Debug.Log("Mauzik => Updated the Mauzik_Library."); 
         }
     }
 

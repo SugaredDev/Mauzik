@@ -70,7 +70,7 @@ public static class Library
 
     // =========================
 
-    const string LibraryName = "Library";
+    const string LibraryName = "Mauzik_Library";
     static Mauzik_Data data;
     
     static Mauzik_Data Data

@@ -196,7 +196,7 @@ public class Mauzik_Debugger : EditorWindow
     {
         EditorGUILayout.Space(8);
         EditorGUILayout.HelpBox($"Mauzik => No Mauzik_Library found at {AssetPath}.", MessageType.Warning);
-        if (GUILayout.Button("Create the Library", GUILayout.Height(30)))
+        if (GUILayout.Button("Generate Mauzik_Library", GUILayout.Height(30)))
         {
             Directory.CreateDirectory(ResourcesPath);
             AssetDatabase.Refresh();
