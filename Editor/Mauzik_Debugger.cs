@@ -31,7 +31,7 @@ public class Mauzik_Debugger : EditorWindow
 
     GUIStyle sDotGreen, sDotRed, sDotGray, sSection, sOrphanSection, sMini, sRichMini;
 
-    [MenuItem("Tools/Mauzik (FMOD)/Debbuger", false, 2)]
+    [MenuItem("Tools/Mauzik (FMOD)/Debugger", false, 2)]
     static void Open() => GetWindow<Mauzik_Debugger>("Mauzik (FMOD)");
 
     void OnEnable() => RefreshAll();
