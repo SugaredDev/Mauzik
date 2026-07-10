@@ -62,7 +62,7 @@ public static class Library
         return audio;
     }
 
-    public static bool SetVolume(float bank_volume, string bank_name = null)
+    public static bool SetVolume(float bank_volume, string bank_name = "Master")
     {
         Bus bus = RuntimeManager.GetBus(NormalizeBusPath(bank_name));
         return bus.isValid() && bus.setVolume(Mathf.Clamp01(bank_volume)) == RESULT.OK;
@@ -91,8 +91,7 @@ public static class Library
         return pkg;
     }
 
-    static string NormalizeBusPath(string name) =>
-        string.IsNullOrWhiteSpace(name) ? "bus:/Master" :
+    static string NormalizeBusPath(string name = "Master") =>
         name.StartsWith("bus:/", StringComparison.OrdinalIgnoreCase) ? name : $"bus:/{name}";
 
 }

@@ -176,12 +176,16 @@ public class Mauzik_Debugger : EditorWindow
     {
         using (new EditorGUILayout.HorizontalScope(EditorStyles.toolbar))
         {
-            if (GUILayout.Button("Refresh All", EditorStyles.toolbarButton, GUILayout.Width(80)))
-                RefreshAll();
-            if (bank != null && GUILayout.Button("Select Asset", EditorStyles.toolbarButton, GUILayout.Width(80)))
-            { 
-                Selection.activeObject = bank; 
-                EditorGUIUtility.PingObject(bank); 
+            if (bank != null)
+            {
+                var prev = GUI.backgroundColor;
+                GUI.backgroundColor = Color.cyan;
+                if (GUILayout.Button("Open Library", EditorStyles.toolbarButton, GUILayout.Width(100)))
+                {
+                    Selection.activeObject = bank;
+                    EditorGUIUtility.PingObject(bank);
+                }
+                GUI.backgroundColor = prev;
             }
             GUILayout.FlexibleSpace();
             bool ready = EventManager.IsLoaded;
