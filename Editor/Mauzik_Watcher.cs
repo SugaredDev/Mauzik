@@ -1,4 +1,5 @@
 using UnityEditor;
+using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -92,7 +93,11 @@ public static class Mauzik_Watcher
             EditorUtility.SetDirty(bank);
             AssetDatabase.SaveAssets();
         }
-        finally { isSyncing = false; }
+        finally 
+        { 
+            isSyncing = false;
+            Debug.Log("Mauzik => Updated the FMOD Library."); 
+        }
     }
 
     static int FindPackageIndex(SerializedProperty arr, string eventPath)
@@ -120,6 +125,7 @@ public static class Mauzik_Watcher
 
 class Mauzik_BankWatcher : AssetPostprocessor
 {
+
     static void OnPostprocessAllAssets(string[] imported, string[] deleted, string[] moved, string[] movedFrom)
     {
         bool hasBankChange = imported.Concat(deleted).Concat(moved)
@@ -127,6 +133,7 @@ class Mauzik_BankWatcher : AssetPostprocessor
         if (hasBankChange)
             EditorApplication.delayCall += Mauzik_Watcher.UpdateLibrary;
     }
+    
 }
 
 }

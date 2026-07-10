@@ -48,6 +48,7 @@ public class Mauzik_Debugger : EditorWindow
     static readonly Regex pkgRe         = new Regex(@"(?:Audio|Library)\s*\.\s*(?:Play|Attach|Get)\s*\(\s*(?:[^,]+,\s*)?(?:""([^""]+)""|([\w]+))", RegexOptions.Compiled);
     static readonly Regex paramRe       = new Regex(@"\.Parameter\s*\(\s*(?:""([^""]+)""|([\w]+))", RegexOptions.Compiled);
     static readonly Regex paramIdxRe    = new Regex(@"\.Parameter\s*\(\s*(\d+)\s*,", RegexOptions.Compiled);
+    static readonly Regex playParamRe    = new Regex(@"Library\s*\.\s*Play\s*\(\s*[^,]+,\s*[^,]+,\s*(?:""([^""]+)""|(\w+))", RegexOptions.Compiled);
     static readonly Regex lineCommentRe = new Regex(@"//.*$", RegexOptions.Multiline | RegexOptions.Compiled);
 
     void ScanScripts()
@@ -100,6 +101,20 @@ public class Mauzik_Debugger : EditorWindow
             {
                 string n = m.Groups[1].Success ? m.Groups[1].Value
                     : (m.Groups[2].Success && stringVars.TryGetValue(m.Groups[2].Value, out var v) ? v : null);
+                if (n == null) continue;
+                scriptParamRefs.Add(n);
+                string token = m.Groups[1].Success ? $"\"{n}\"" : $"{m.Groups[2].Value} (\"{n}\")";
+                var sr = new ScriptRef { path = ap, line = LineOf(src, m.Index), token = token };
+                if (!validParamNames.Contains(n))
+                    orphans.Add(sr);
+                else
+                    correctRefs.Add(sr);
+            }
+
+            foreach (Match m in playParamRe.Matches(src))
+            {
+                string n = m.Groups[1].Success ? m.Groups[1].Value
+                    : (m.Groups[2].Success && stringVars.TryGetValue(m.Groups[2].Value, out var pv) ? pv : null);
                 if (n == null) continue;
                 scriptParamRefs.Add(n);
                 string token = m.Groups[1].Success ? $"\"{n}\"" : $"{m.Groups[2].Value} (\"{n}\")";
