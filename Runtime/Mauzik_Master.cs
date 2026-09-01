@@ -12,8 +12,12 @@ public class Audio
 
     // =========================
     
-    public void Stop(bool hardStop = false) =>
+    public void Stop(bool hardStop = false)
+    {
         instance.stop(hardStop ? FMOD.Studio.STOP_MODE.IMMEDIATE : FMOD.Studio.STOP_MODE.ALLOWFADEOUT);
+        instance.release();
+    }
+        
 
     public void Parameter(string name, float value) =>
         instance.setParameterByName(name, value);
