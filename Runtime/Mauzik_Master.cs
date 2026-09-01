@@ -62,18 +62,17 @@ public static class Library
         return audio;
     }
 
-    public static bool Volume(string bank_name, float bank_volume)
+    public static bool Volume(string bus_name, float bus_volume)
     {
-        string path = NormalizeBusPath(bank_name);
-        Bus bus = Get_Bus(path);
-        return bus.isValid() && bus.setVolume(Mathf.Clamp01(bank_volume)) == RESULT.OK;
+        Bus bus = Get_Bus(bus_name);
+        return bus.isValid() && bus.setVolume(Mathf.Clamp01(bus_volume)) == RESULT.OK;
     }
 
     // =========================
 
     const string LibraryName = "Mauzik_Library";
     static Mauzik_Data data;
-    static System.Collections.Generic.Dictionary<string, Bus> busCache = new();
+    static System.Collections.Generic.Dictionary<string, Bus> Buses = new System.Collections.Generic.Dictionary<string, Bus>();
     
     static Mauzik_Data Data
     {
@@ -93,19 +92,14 @@ public static class Library
         return pkg;
     }
 
-    static Bus Get_Bus(string path)
+    static Bus Get_Bus(string name)
     {
-        if (busCache.TryGetValue(path, out var bus) && bus.isValid())
-            return bus;
-        
-        bus = RuntimeManager.GetBus(path);
-        if (bus.isValid())
-            busCache[path] = bus;
-        
+        if (!Buses.TryGetValue(name, out var bus))
+            Buses[name] = bus = RuntimeManager.GetBus(BusPath(name));
         return bus;
     }
 
-    static string NormalizeBusPath(string name = "Master") =>
+    static string BusPath(string name = "Master") =>
         name.StartsWith("bus:/", StringComparison.OrdinalIgnoreCase) ? name : $"bus:/{name}";
 
 }
