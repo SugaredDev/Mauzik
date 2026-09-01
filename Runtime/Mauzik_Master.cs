@@ -56,15 +56,16 @@ public static class Library
 
     public static Audio Play(Transform target, string event_name, string parameter_name = null, float parameter_value = 0f)
     {
-        var audio = Audio.Attach(target, Get(event_name));
+        var audio = Audio.Attach(target, Get_Event(event_name));
         if (audio != null && !string.IsNullOrEmpty(parameter_name))
             audio.Parameter(parameter_name, parameter_value);
         return audio;
     }
 
-    public static bool SetVolume(float bank_volume, string bank_name = "Master")
+    public static bool Volume(string bank_name, float bank_volume)
     {
-        Bus bus = RuntimeManager.GetBus(NormalizeBusPath(bank_name));
+        string path = NormalizeBusPath(bank_name);
+        Bus bus = Get_Bus(path);
         return bus.isValid() && bus.setVolume(Mathf.Clamp01(bank_volume)) == RESULT.OK;
     }
 
@@ -72,6 +73,7 @@ public static class Library
 
     const string LibraryName = "Mauzik_Library";
     static Mauzik_Data data;
+    static System.Collections.Generic.Dictionary<string, Bus> busCache = new();
     
     static Mauzik_Data Data
     {
@@ -84,11 +86,23 @@ public static class Library
         }
     }
 
-    static Mauzik_Package Get(string name)
+    static Mauzik_Package Get_Event(string name)
     {
         var pkg = Data?.Get(name);
         if (pkg == null) UnityEngine.Debug.LogWarning($"Mauzik => Package \"{name}\" not found.");
         return pkg;
+    }
+
+    static Bus Get_Bus(string path)
+    {
+        if (busCache.TryGetValue(path, out var bus) && bus.isValid())
+            return bus;
+        
+        bus = RuntimeManager.GetBus(path);
+        if (bus.isValid())
+            busCache[path] = bus;
+        
+        return bus;
     }
 
     static string NormalizeBusPath(string name = "Master") =>
