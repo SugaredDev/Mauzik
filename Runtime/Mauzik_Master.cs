@@ -62,12 +62,8 @@ public static class Library
         return audio;
     }
 
-    public static bool Volume(string bus_name, float bus_volume)
-    {
-        Bus bus = Get_Bus(bus_name);
-        return bus.isValid() && bus.setVolume(Mathf.Clamp01(bus_volume)) == RESULT.OK;
-    }
-
+    public static void Volume(string bus_name, float bus_volume) => RuntimeManager.GetBus(BusPath(bus_name)).setVolume(bus_volume);
+    
     // =========================
 
     const string LibraryName = "Mauzik_Library";
@@ -92,15 +88,7 @@ public static class Library
         return pkg;
     }
 
-    static Bus Get_Bus(string name)
-    {
-        if (!Buses.TryGetValue(name, out var bus))
-            Buses[name] = bus = RuntimeManager.GetBus(BusPath(name));
-        return bus;
-    }
-
-    static string BusPath(string name = "Master") =>
-        name.StartsWith("bus:/", StringComparison.OrdinalIgnoreCase) ? name : $"bus:/{name}";
+    static string BusPath(string name = "Master") => name.StartsWith("bus:/", StringComparison.OrdinalIgnoreCase) ? name : $"bus:/{name}";
 
 }
 
